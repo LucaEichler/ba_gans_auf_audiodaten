@@ -74,7 +74,7 @@ class AudioDataset(data.Dataset):
         batch = np.add(batch, noise_array)
         batch = batch/np.max(batch)"""
         #Make values positive
-        batch = util.shift_above_zero(batch)
+        #batch = util.shift_above_zero(batch)
         return batch
 
 

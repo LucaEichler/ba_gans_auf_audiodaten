@@ -13,12 +13,12 @@ def latent_vector_from_numpy(batch_size, latent_size):
 def latent_vector_uniform_batch(batch_size, latent_size):
     return torch.rand(batch_size, latent_size)
 
-def latent_vector_uniform(size):
+def latent_vector_uniform(batch_size, latent_size):
     """
     Returns latent vector sampled from a uniform distribution.
     """
     #TODO: Check if values in [-1,1] and if [-1,1] is the only adequate window
-    return torch.rand(size)
+    return torch.rand(batch_size, latent_size, 1)
 
 def latent_vector_normal(batch_size, latent_size):
     """
@@ -58,7 +58,7 @@ def train(args : Dict):
     loss_fn = torch.nn.BCELoss()
 
     optimizerD = torch.optim.Adam(D.parameters(), lr=learning_rate, betas=(0.5, 0.999))
-    optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate*10, betas=(0.5, 0.999))
+    optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate, betas=(0.5, 0.999))
 
     #optimizerD = torch.optim.RMSprop(D.parameters(), lr=learning_rate)
     #optimizerG = torch.optim.RMSprop(G.parameters(), lr=learning_rate)
@@ -98,10 +98,12 @@ def train(args : Dict):
 
                 errDreal = loss_fn(D(x).view(-1), torch.full((batch_size,), 1).float())
                 errDfake = loss_fn(D(y).view(-1), torch.full((batch_size,), 0).float())
+
                 errDreal.backward()
+                errDfake.backward()
+
                 errD = errDreal + errDfake
                 lossDs.append(errD.item())
-                errDfake.backward()
             else:
                 errDreal = D(x)
                 errDreal.backward(torch.FloatTensor([1]))
@@ -131,11 +133,12 @@ def train(args : Dict):
         if i % 1000 == 0:
             generate_audio(G, 'it'+str(i)+'_', 3, batch_size, latent_size, latent_dist)
             test_discriminator(D, G, batch_size, dataset, latent_size, epoch, epoch_iteration, latent_dist)
-            print(lossDs)
-            print(lossGs)
             plotter.plot_losses(lossDs, lossGs)
         i+=1
         epoch_iteration+=1
+
+        if i % 10000 == 0:
+            test_discriminator(D, G, dataset.__len__(), latent_size, latent_dist)
     return D, G
 
 def generate_audio(G : Generator, prefix : str, amount, batch_size, latent_size, latent_dist):
