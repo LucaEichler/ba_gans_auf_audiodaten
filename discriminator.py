@@ -56,12 +56,12 @@ class Discriminator(nn.Module):
 
 
 class WGANDiscriminator(Discriminator):
-    def __init__(self, batch_size):
-        super(WGANDiscriminator, self).__init__(batch_size)
+    def __init__(self, model_size):
+        super(WGANDiscriminator, self).__init__(model_size)
 
 
     def forward(self, x):
         x = super().run(x)
-        x = x.mean(1)
+        x = x.mean(0)
         x = x.view(1)
         return x

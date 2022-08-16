@@ -52,7 +52,9 @@ def train(args : Dict):
 
     #Initialize Generator and Discriminator
     G = Generator(latent_size, model_size=1)
-    D = Discriminator(model_size=1)
+    if not use_wgan:
+        D = Discriminator(model_size=1)
+    else: D = WGANDiscriminator(model_size=1)
 
     #Use binary cross entropy as loss function
     loss_fn = torch.nn.BCELoss()
@@ -60,8 +62,8 @@ def train(args : Dict):
     optimizerD = torch.optim.Adam(D.parameters(), lr=learning_rate, betas=(0.5, 0.999))
     optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate, betas=(0.5, 0.999))
 
-    #optimizerD = torch.optim.RMSprop(D.parameters(), lr=learning_rate)
-    #optimizerG = torch.optim.RMSprop(G.parameters(), lr=learning_rate)
+    optimizerD = torch.optim.RMSprop(D.parameters(), lr=0.00005)
+    optimizerG = torch.optim.RMSprop(G.parameters(), lr=0.00005)
 
     lossDs = []
     lossGs = []
@@ -105,6 +107,9 @@ def train(args : Dict):
                 errD = errDreal + errDfake
                 lossDs.append(errD.item())
             else:
+                weight_clipping_limit = 0.01
+                for p in D.parameters():
+                    p.data.clamp_(-weight_clipping_limit, weight_clipping_limit)
                 errDreal = D(x)
                 errDreal.backward(torch.FloatTensor([1]))
                 errDfake = D(y)
@@ -125,6 +130,7 @@ def train(args : Dict):
             errG.backward()
         else:
             errG = D(G(z))
+            errG.mean
             errG.backward(torch.FloatTensor([1]))
         lossGs.append(errG.item())
         optimizerG.step()
@@ -138,7 +144,7 @@ def train(args : Dict):
         epoch_iteration+=1
 
         if i % 10000 == 0:
-            test_discriminator(D, G, dataset.__len__(), latent_size, latent_dist)
+            test_discriminator(D, G, dataset.__len__(), latent_size, epoch, epoch_iteration, latent_dist)
     return D, G
 
 def generate_audio(G : Generator, prefix : str, amount, batch_size, latent_size, latent_dist):
@@ -166,7 +172,7 @@ def test_discriminator(D : Discriminator, G : Generator, batch_size, dataset : i
 if __name__ == '__main__':
     args = {'num_iterations': 10000000, 'k': 1, 'batch_size': 4, 'latent_size': 100,
             'dataset_path': './datasets/nsynth/nsynth-test/4keys', 'learning_rate': 0.0002, 'generate_path': './generated_sounds',
-            'use_wgan': False, 'latent_dist': 'normal'}
+            'use_wgan': True, 'latent_dist': 'normal'}
     D, G = train(args)
 
 
