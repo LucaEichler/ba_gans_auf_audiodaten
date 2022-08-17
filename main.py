@@ -59,11 +59,13 @@ def train(args : Dict):
     #Use binary cross entropy as loss function
     loss_fn = torch.nn.BCELoss()
 
+    torch.autograd.set_detect_anomaly(True)
+
     optimizerD = torch.optim.Adam(D.parameters(), lr=learning_rate, betas=(0.5, 0.999))
     optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate, betas=(0.5, 0.999))
 
-    optimizerD = torch.optim.RMSprop(D.parameters(), lr=0.00005)
-    optimizerG = torch.optim.RMSprop(G.parameters(), lr=0.00005)
+    #optimizerD = torch.optim.RMSprop(D.parameters(), lr=0.00005)
+    #optimizerG = torch.optim.RMSprop(G.parameters(), lr=0.00005)
 
     lossDs = []
     lossGs = []
@@ -140,11 +142,13 @@ def train(args : Dict):
             generate_audio(G, 'it'+str(i)+'_', 3, batch_size, latent_size, latent_dist)
             test_discriminator(D, G, batch_size, dataset, latent_size, epoch, epoch_iteration, latent_dist)
             plotter.plot_losses(lossDs, lossGs)
+            #for p in G.parameters():
+                #print(p.data)
         i+=1
         epoch_iteration+=1
 
         if i % 10000 == 0:
-            test_discriminator(D, G, dataset.__len__(), dataset, latent_size, epoch, epoch_iteration, latent_dist)
+            test_discriminator(D, G, dataset.__len__(), dataset, latent_size, 0, 0, latent_dist)
     return D, G
 
 def generate_audio(G : Generator, prefix : str, amount, batch_size, latent_size, latent_dist):
@@ -172,7 +176,7 @@ def test_discriminator(D : Discriminator, G : Generator, batch_size, dataset : i
 if __name__ == '__main__':
     args = {'num_iterations': 10000000, 'k': 1, 'batch_size': 4, 'latent_size': 100,
             'dataset_path': './datasets/nsynth-test/4keys', 'learning_rate': 0.0002, 'generate_path': './generated_sounds',
-            'use_wgan': True, 'latent_dist': 'normal'}
+            'use_wgan': False, 'latent_dist': 'normal'}
     D, G = train(args)
 
 

@@ -74,8 +74,9 @@ class Generator(nn.Module):
         x = torch.relu(self.tconv4(x))
         x = torch.relu(self.tconv5(x))
         x = torch.relu(self.tconv6(x))
-        x = torch.relu(self.tconv7(x))
+        x = self.tconv7(x)
         x = self.tanh(x)
+        print(x)
         return x
 """
         self.tconv1 = nn.ConvTranspose1d(latent_size, 250, kernel_size=1)
