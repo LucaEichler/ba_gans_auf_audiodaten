@@ -61,8 +61,8 @@ def train(args : Dict):
 
     torch.autograd.set_detect_anomaly(True)
 
-    optimizerD = torch.optim.Adam(D.parameters(), lr=learning_rate, betas=(0.5, 0.999))
-    optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate, betas=(0.5, 0.999))
+    optimizerD = torch.optim.Adam(D.parameters(), lr=learning_rate*0.1, betas=(0.5, 0.999))
+    optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate*0.5, betas=(0.5, 0.999))
 
     #optimizerD = torch.optim.RMSprop(D.parameters(), lr=0.00005)
     #optimizerG = torch.optim.RMSprop(G.parameters(), lr=0.00005)
@@ -97,6 +97,7 @@ def train(args : Dict):
 
             #Start: Update Discriminator weights
             optimizerD.zero_grad()
+
             #Compute losses
             if not use_wgan:
 
@@ -122,17 +123,16 @@ def train(args : Dict):
             #End: Update Discriminator weights
 
         #Train Generator
+        optimizerG.zero_grad()
 
         #Sample minibatch of m noise samples to train generator
         z = sampleZ(batch_size, latent_size, latent_dist)
 
-        optimizerG.zero_grad()
         if not use_wgan:
             errG = loss_fn(D(G(z)).view(-1), torch.full((batch_size,), 1).float())
             errG.backward()
         else:
             errG = D(G(z))
-            errG.mean
             errG.backward(torch.FloatTensor([1]))
         lossGs.append(errG.item())
         optimizerG.step()
@@ -174,8 +174,8 @@ def test_discriminator(D : Discriminator, G : Generator, batch_size, dataset : i
 
 
 if __name__ == '__main__':
-    args = {'num_iterations': 10000000, 'k': 1, 'batch_size': 4, 'latent_size': 100,
-            'dataset_path': './datasets/nsynth-test/4keys', 'learning_rate': 0.0002, 'generate_path': './generated_sounds',
+    args = {'num_iterations': 10000000, 'k': 1, 'batch_size': 1, 'latent_size': 100,
+            'dataset_path': './datasets/nsynth-test/keyboard_accoustic', 'learning_rate': 0.0002, 'generate_path': './generated_sounds',
             'use_wgan': False, 'latent_dist': 'normal'}
     D, G = train(args)
 
