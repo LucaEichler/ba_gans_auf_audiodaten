@@ -60,12 +60,12 @@ def train(args : Dict):
     loss_fn = torch.nn.BCELoss()
 
     torch.autograd.set_detect_anomaly(True)
-
-    optimizerD = torch.optim.Adam(D.parameters(), lr=learning_rate*0.1, betas=(0.5, 0.999))
-    optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate*0.5, betas=(0.5, 0.999))
-
-    #optimizerD = torch.optim.RMSprop(D.parameters(), lr=0.00005)
-    #optimizerG = torch.optim.RMSprop(G.parameters(), lr=0.00005)
+    if not use_wgan:
+        optimizerD = torch.optim.Adam(D.parameters(), lr=learning_rate*0.1, betas=(0.5, 0.999))
+        optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate*0.5, betas=(0.5, 0.999))
+    else:
+        optimizerD = torch.optim.RMSprop(D.parameters(), lr=0.00005)
+        optimizerG = torch.optim.RMSprop(G.parameters(), lr=0.00005)
 
     lossDs = []
     lossGs = []
@@ -78,8 +78,10 @@ def train(args : Dict):
             epoch = epoch+1
             epoch_iteration = 0
 
+        lossDs_temp = []
         #Train Discriminator k times
         for j in range(k):
+
             """#Skip discriminator training when getting to strong
             if i>=500 and lossDs[len(lossDs)-1] < lossGs[len(lossGs)-1]:
                 lossDs.append(lossDs[len(lossDs)-1])
@@ -108,18 +110,19 @@ def train(args : Dict):
                 errDfake.backward()
 
                 errD = errDreal + errDfake
-                lossDs.append(errD.item())
             else:
-                weight_clipping_limit = 0.01
-                for p in D.parameters():
-                    p.data.clamp_(-weight_clipping_limit, weight_clipping_limit)
                 errDreal = D(x)
                 errDreal.backward(torch.FloatTensor([1]))
                 errDfake = D(y)
                 errDfake.backward(torch.FloatTensor([1])*-1)
                 errD = errDreal+errDfake
-                lossDs.append(errD.item())
+                #Weight clipping
+                weight_clipping_limit = 0.01
+                for p in D.parameters():
+                    p.data.clamp_(-weight_clipping_limit, weight_clipping_limit)
             optimizerD.step()
+            lossDs_temp.append(errD.item())
+        lossDs.append(sum(lossDs_temp)/k)
             #End: Update Discriminator weights
 
         #Train Generator
@@ -174,9 +177,9 @@ def test_discriminator(D : Discriminator, G : Generator, batch_size, dataset : i
 
 
 if __name__ == '__main__':
-    args = {'num_iterations': 10000000, 'k': 1, 'batch_size': 1, 'latent_size': 100,
+    args = {'num_iterations': 10000000, 'k': 5, 'batch_size': 1, 'latent_size': 100,
             'dataset_path': './datasets/nsynth-test/keyboard_accoustic', 'learning_rate': 0.0002, 'generate_path': './generated_sounds',
-            'use_wgan': False, 'latent_dist': 'normal'}
+            'use_wgan': True, 'latent_dist': 'normal'}
     D, G = train(args)
 
 

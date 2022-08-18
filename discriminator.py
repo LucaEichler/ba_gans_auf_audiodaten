@@ -61,7 +61,8 @@ class WGANDiscriminator(Discriminator):
 
 
     def forward(self, x):
-        x = super().run(x)
+        #x = super().run(x)
+        x = self.run(x)
         x = x.mean(0)
         x = x.view(1)
         return x
