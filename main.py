@@ -120,8 +120,10 @@ def train(args : Dict):
                 errDreal.backward(torch.FloatTensor([1]))
                 errDfake = D(y)
                 errDfake.backward(torch.FloatTensor([1])*-1)
-                errD = errDreal+errDfake
-                #Weight clipping
+                errD = errDfake-errDreal
+                wasserstein_distance = errDreal-errDfake
+
+                #Weight - before or after computing Gradients?
                 weight_clipping_limit = 0.01
                 for p in D.parameters():
                     p.data.clamp_(-weight_clipping_limit, weight_clipping_limit)
