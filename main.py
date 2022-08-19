@@ -1,3 +1,6 @@
+from torch import autograd
+from torch.autograd import Variable
+
 import inout
 import torch
 import plotter
@@ -6,6 +9,32 @@ from discriminator import Discriminator, WGANDiscriminator
 from typing import Dict
 import numpy as np
 import util
+
+
+#Taken from https://github.com/Zeleni9/pytorch-wgan/ TODO: Write own version.
+def calculate_gradient_penalty(batch_size, real_sounds, fake_sounds, D, G):
+    lambda_term = 10
+
+    eta = torch.FloatTensor(batch_size, 1,1).uniform_(0,1)
+    eta = eta.expand(batch_size, real_sounds.size(1), real_sounds.size(2))
+
+    interpolated = eta * real_sounds + ((1 - eta) * fake_sounds)
+
+
+    # define it to calculate gradient
+    interpolated = Variable(interpolated, requires_grad=True)
+
+    # calculate probability of interpolated examples
+    prob_interpolated = D(interpolated)
+
+    # calculate gradients of probabilities with respect to examples
+    gradients = autograd.grad(outputs=prob_interpolated, inputs=interpolated,
+                           grad_outputs=torch.ones(
+                               prob_interpolated.size()),
+                           create_graph=True, retain_graph=True)[0]
+
+    grad_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * lambda_term
+    return grad_penalty
 
 def latent_vector_from_numpy(batch_size, latent_size):
     return torch.from_numpy((np.random.rand(batch_size, latent_size)-0.5)*10000).float()
@@ -45,25 +74,24 @@ def train(args : Dict):
     latent_size = args.get('latent_size')
     dataset_path = args.get('dataset_path')
     dataset = inout.AudioDataset(dataset_path.split('/')[-1], dataset_path)
-    use_wgan = args.get('use_wgan')
+    mode = args.get('mode')
     latent_dist = args.get('latent_dist')
     learning_rate = args.get('learning_rate')
 
 
     #Initialize Generator and Discriminator
     G = Generator(latent_size, model_size=1)
-    if not use_wgan:
-        D = Discriminator(model_size=1)
-    else: D = WGANDiscriminator(model_size=1)
+    D = Discriminator(model_size=1)
+    if mode == 'wgan' or mode == 'wgan-gp':
+        D = WGANDiscriminator(model_size=1)
 
     #Use binary cross entropy as loss function
     loss_fn = torch.nn.BCELoss()
 
     torch.autograd.set_detect_anomaly(True)
-    if not use_wgan:
-        optimizerD = torch.optim.Adam(D.parameters(), lr=learning_rate*0.1, betas=(0.5, 0.999))
-        optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate*0.5, betas=(0.5, 0.999))
-    else:
+    optimizerD = torch.optim.Adam(D.parameters(), lr=learning_rate*0.1, betas=(0.5, 0.999))
+    optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate*0.5, betas=(0.5, 0.999))
+    if mode == 'wgan':
         optimizerD = torch.optim.RMSprop(D.parameters(), lr=0.00005)
         optimizerG = torch.optim.RMSprop(G.parameters(), lr=0.00005)
 
@@ -106,7 +134,7 @@ def train(args : Dict):
             D.zero_grad()
 
             #Compute losses
-            if not use_wgan:
+            if not (mode == 'wgan' or mode == 'wgan-gp'):
 
                 errDreal = loss_fn(D(x).view(-1), torch.full((batch_size,), 1).float())
                 errDfake = loss_fn(D(y).view(-1), torch.full((batch_size,), 0).float())
@@ -122,11 +150,14 @@ def train(args : Dict):
                 errDfake.backward(torch.FloatTensor([1])*-1)
                 errD = errDfake-errDreal
                 wasserstein_distance = errDreal-errDfake
-
-                #Weight - before or after computing Gradients?
-                weight_clipping_limit = 0.01
-                for p in D.parameters():
-                    p.data.clamp_(-weight_clipping_limit, weight_clipping_limit)
+                if mode == 'wgan-gp':
+                    gradient_penalty = calculate_gradient_penalty(batch_size, x.data, y.data, D, G)
+                    gradient_penalty.backward()
+                if mode == 'wgan':
+                    #Weight - before or after computing Gradients?
+                    weight_clipping_limit = 0.01
+                    for p in D.parameters():
+                        p.data.clamp_(-weight_clipping_limit, weight_clipping_limit)
             optimizerD.step()
             lossDs_temp.append(errD.item())
         lossDs.append(sum(lossDs_temp)/k)
@@ -144,7 +175,7 @@ def train(args : Dict):
         #Sample minibatch of m noise samples to train generator
         z = sampleZ(batch_size, latent_size, latent_dist)
 
-        if not use_wgan:
+        if not (mode == 'wgan' or mode == 'wgan-gp'):
             errG = loss_fn(D(G(z)).view(-1), torch.full((batch_size,), 1).float())
             errG.backward()
         else:
@@ -193,8 +224,10 @@ def test_discriminator(D : Discriminator, G : Generator, batch_size, dataset : i
 if __name__ == '__main__':
     args = {'num_iterations': 10000000, 'k': 5, 'batch_size': 1, 'latent_size': 100,
             'dataset_path': './datasets/nsynth-test/keyboard_accoustic', 'learning_rate': 0.0002, 'generate_path': './generated_sounds',
-            'use_wgan': True, 'latent_dist': 'normal'}
+            'mode': 'wgan-gp', 'latent_dist': 'normal'}
     D, G = train(args)
+
+
 
 
     """#Generate and save sounds with G
