@@ -1,6 +1,49 @@
 import torch.nn as nn
 import torch
 
+
+
+class DiscriminatorWaveGAN(nn.Module):
+    def __init__(self, model_size):
+        super(DiscriminatorWaveGAN, self).__init__()
+
+        self.model_size = model_size
+
+        self.conv1 = nn.Conv1d(1, model_size, kernel_size=25, stride=4, padding=0, bias=False)
+
+        self.conv2 = nn.Conv1d(model_size, model_size * 2, kernel_size=25, stride=4, padding=0, bias=False)
+
+        self.conv3 = nn.Conv1d(model_size * 2, model_size * 4, kernel_size=25, stride=4, padding=0,
+                               bias=False)
+
+        self.conv4 = nn.Conv1d(model_size * 4, model_size * 8, kernel_size=25, stride=4, padding=0,
+                               bias=False)
+
+        self.conv5 = nn.Conv1d(model_size * 8, model_size * 16, kernel_size=25, stride=4, padding=0,
+                               bias=False)
+
+        self.conv6 = nn.Conv1d(model_size * 16, model_size * 32, kernel_size=25, stride=4, padding=0,
+                               bias=False)
+
+        def run(self, x):
+            x = self.lrelu(self.conv1(x))
+            x = self.lrelu(self.conv2(x))
+            x = self.lrelu(self.conv3(x))
+            x = self.lrelu(self.conv4(x))
+            x = self.lrelu(self.conv5(x))
+            x = self.lrelu(self.conv6(x))
+            print(x.size())
+            #x = x.view(x.size(dim=0), 512, self.model_size)
+            #x = self.lrelu(self.conv7(x))
+            return x
+
+        def forward(self, x):
+            x = self.run(x)
+            x = self.sigmoid(x)
+            return x
+
+
+
 class Discriminator(nn.Module):
     def __init__(self, model_size):
         super(Discriminator, self).__init__()

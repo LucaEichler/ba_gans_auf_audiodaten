@@ -72,6 +72,11 @@ def train(args : Dict):
     epoch = 0
     epoch_iteration = 0
     for i in range(num_iterations):
+
+        #
+        for p in D.parameters():
+            p.requires_grad = True
+
         #Check if epoch is finished and enter new epoch
         if epoch_iteration >= dataset.epoch_length(batch_size)-1:
             dataset.shuffle()
@@ -124,6 +129,10 @@ def train(args : Dict):
             lossDs_temp.append(errD.item())
         lossDs.append(sum(lossDs_temp)/k)
             #End: Update Discriminator weights
+
+        #
+        for p in D.parameters():
+            p.requires_grad = False
 
         #Train Generator
         optimizerG.zero_grad()

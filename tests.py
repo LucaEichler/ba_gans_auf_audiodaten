@@ -8,9 +8,14 @@ import main
 import util
 from generator import Generator
 from discriminator import Discriminator
+from discriminator import DiscriminatorWaveGAN
+
 
 
 def run_tests():
+    D = DiscriminatorWaveGAN(model_size=1)
+    x = torch.randn(1, 64)
+    D(x)
     plotter.plot_dataset('audioComplete', './datasets/nsynth/nsynth-test/audioComplete', 64000)
     """"
     
