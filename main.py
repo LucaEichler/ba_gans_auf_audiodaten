@@ -101,9 +101,9 @@ def train(args : Dict):
             batch = dataset.get_batch(epoch_iteration, batch_size, epoch)
             x = torch.unsqueeze((torch.from_numpy(batch)), 1).float()
 
-
             #Start: Update Discriminator weights
             optimizerD.zero_grad()
+            D.zero_grad()
 
             #Compute losses
             if not use_wgan:
@@ -134,8 +134,10 @@ def train(args : Dict):
         for p in D.parameters():
             p.requires_grad = False
 
+
         #Train Generator
         optimizerG.zero_grad()
+        G.zero_grad()
 
         #Sample minibatch of m noise samples to train generator
         z = sampleZ(batch_size, latent_size, latent_dist)
@@ -156,6 +158,7 @@ def train(args : Dict):
             plotter.plot_losses(lossDs, lossGs)
             #for p in G.parameters():
                 #print(p.data)
+
         i+=1
         epoch_iteration+=1
 
