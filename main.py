@@ -4,7 +4,7 @@ from torch.autograd import Variable
 import inout
 import torch
 import plotter
-from generator import Generator
+from generator import Generator, GeneratorWaveGAN
 from discriminator import Discriminator, WGANDiscriminator
 from typing import Dict
 import numpy as np
@@ -80,7 +80,7 @@ def train(args : Dict):
 
 
     #Initialize Generator and Discriminator
-    G = Generator(latent_size, model_size=1)
+    G = GeneratorWaveGAN(latent_size, model_size=1)
     D = Discriminator(model_size=1)
     if mode == 'wgan' or mode == 'wgan-gp':
         D = WGANDiscriminator(model_size=1)
@@ -126,7 +126,7 @@ def train(args : Dict):
             y = G(z)
 
             #Sample minibatch of m examples from data generating distribution
-            batch = dataset.get_batch(epoch_iteration, batch_size, epoch)
+            batch = dataset.get_batch(epoch_iteration, batch_size, epoch, output_size=65536)
             x = torch.unsqueeze((torch.from_numpy(batch)), 1).float()
 
             #Start: Update Discriminator weights
@@ -211,7 +211,7 @@ def generate_audio(G : Generator, prefix : str, amount, batch_size, latent_size,
             x+=1
 
 def test_discriminator(D : Discriminator, G : Generator, batch_size, dataset : inout.AudioDataset, latent_size, epoch, epoch_it, latent_dist):
-    batch = dataset.get_batch(epoch_it, batch_size, epoch)
+    batch = dataset.get_batch(epoch_it, batch_size, epoch, output_size=65536)
     plotter.plot_1d_array(batch[0])
     x = torch.unsqueeze((torch.from_numpy(batch)), 1).float()
     print('**** Real Data ****')

@@ -53,7 +53,7 @@ class AudioDataset(data.Dataset):
     def shuffle(self):
         self.current_permutation = util.random_permutation(self.__len__())
 
-    def get_batch(self, epoch_iteration, batch_size, epoch):
+    def get_batch(self, epoch_iteration, batch_size, epoch, output_size):
         #epoch_iteration = iteration-epoch*self.epoch_length(batch_size)
         start_index = epoch_iteration * batch_size
         end_index = start_index + batch_size
@@ -66,6 +66,8 @@ class AudioDataset(data.Dataset):
                 x = start_index+i
                 batch[i, :]=self.__getitem__(self.current_permutation[int(x)])
                 i+=1
+        #Resize to output size
+        batch.resize((batch_size, output_size))
         #Normalize
         batch = batch/self.max_val
         """noise_array = np.random.rand(batch.shape[0], batch.shape[1])

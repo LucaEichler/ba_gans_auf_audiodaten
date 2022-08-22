@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import scipy.io.wavfile as wf
 import torch
@@ -6,17 +8,19 @@ import inout
 import plotter
 import main
 import util
-from generator import Generator
+from generator import GeneratorWaveGAN
 from discriminator import Discriminator
 from discriminator import DiscriminatorWaveGAN
 
 
 
 def run_tests():
-    D = DiscriminatorWaveGAN(model_size=1)
-    x = torch.randn(1, 64)
-    D(x)
-    plotter.plot_dataset('audioComplete', './datasets/nsynth/nsynth-test/audioComplete', 64000)
+
+
+
+    G = GeneratorWaveGAN(latent_size= 100, model_size=1)
+    x = torch.randn(1, 100, 1)
+#    plotter.plot_dataset('audioComplete', './datasets/nsynth/nsynth-test/audioComplete', 64000)
     """"
     
     z = torch.unsqueeze(inout.latent_vector_from_numpy(4, 100), 1)
