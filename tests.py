@@ -16,10 +16,12 @@ from discriminator import DiscriminatorWaveGAN
 
 def run_tests():
 
+    D = DiscriminatorWaveGAN(model_size=1)
 
 
     G = GeneratorWaveGAN(latent_size= 100, model_size=1)
     x = torch.randn(1, 100, 1)
+    print(D(G(x)))
 #    plotter.plot_dataset('audioComplete', './datasets/nsynth/nsynth-test/audioComplete', 64000)
     """"
     
