@@ -33,7 +33,6 @@ class AudioDataset(data.Dataset):
                     #x = self.data.shape[0]+1
                     #self.data.resize((x, data_size), refcheck=False)
                     self.data[i, :] = a
-                    print(i)
                     i+=1
                 except FileNotFoundError:
                     #Array um 1 verringern

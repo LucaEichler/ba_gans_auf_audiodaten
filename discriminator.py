@@ -29,22 +29,13 @@ class DiscriminatorWaveGAN(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def run(self, x):
-        print('Discriminator starting...')
-        print(x.size())
         x = self.lrelu(self.conv1(x))
-        print(x.size())
         x = self.lrelu(self.conv2(x))
-        print(x.size())
         x = self.lrelu(self.conv3(x))
-        print(x.size())
         x = self.lrelu(self.conv4(x))
-        print(x.size())
         x = self.lrelu(self.conv5(x))
-        print(x.size())
         x = self.lrelu(self.conv6(x))
-        print(x.size())
         x = x.view(x.size(dim=0), self.model_size, 512)
-        print(x.size())
         x = self.fc1(x)
         return x
 

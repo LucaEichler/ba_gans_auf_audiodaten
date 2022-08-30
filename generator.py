@@ -12,14 +12,12 @@ class GeneratorWaveGAN(nn.Module):
 
     def __init__(self, latent_size, model_size):
         super(GeneratorWaveGAN, self).__init__()
-        ngf = 64
-        nz = 100
-        nc = 3
         self.model_size = model_size
 
         #TODO: Bias or no Bias?
 
-        self.tconv1 = nn.ConvTranspose1d(latent_size, model_size*512, kernel_size=1, stride = 4, padding = 0, bias = False)
+        #self.tconv1 = nn.ConvTranspose1d(latent_size, model_size*512, kernel_size=1, stride = 4, padding = 0, bias = False)
+        self.fc1 = nn.Linear(latent_size, model_size*512)
 
         self.tconv2 = nn.ConvTranspose1d(model_size*32, model_size*16, kernel_size=25, stride = 4, padding = 11, output_padding=1, bias = False)
 
@@ -31,39 +29,46 @@ class GeneratorWaveGAN(nn.Module):
 
         self.tconv6 = nn.ConvTranspose1d(model_size*2, model_size, kernel_size=25, stride = 4, padding = 11, output_padding=1, bias = False)
 
-
         self.tconv7 = nn.ConvTranspose1d(model_size, 1, kernel_size=25, stride = 4, padding = 11, output_padding=1, bias = False)
+
         self.tanh = nn.Tanh()
 
         # Input is the latent vector Z.
 
 
     def forward(self, x):
-        x = torch.relu(self.tconv1(x))
         print(x.size())
-
-        x = x.view(x.size(dim=0), 32, self.model_size*16)
+        x = self.fc1(x)
+        print(x.size())
+        x = x.view(-1, self.model_size*32, 16)
+        x = x = torch.relu(x)
         print(x.size())
 
         x = torch.relu(self.tconv2(x))
         print(x.size())
 
+
         x = torch.relu(self.tconv3(x))
         print(x.size())
+
 
         x = torch.relu(self.tconv4(x))
         print(x.size())
 
+
         x = torch.relu(self.tconv5(x))
         print(x.size())
+
 
         x = torch.relu(self.tconv6(x))
         print(x.size())
 
+
         x = self.tconv7(x)
         print(x.size())
+
+
         x = self.tanh(x)
-        print(x)
         return x
 
 
@@ -71,9 +76,6 @@ class Generator(nn.Module):
 
     def __init__(self, latent_size, model_size):
         super(Generator, self).__init__()
-        ngf = 64
-        nz = 100
-        nc = 3
         self.model_size = model_size
 
         #TODO: Bias or no Bias?
@@ -95,7 +97,6 @@ class Generator(nn.Module):
         self.tconv7 = nn.ConvTranspose1d(model_size, 1, kernel_size=25, stride = 3, padding = 0, bias = False)
         self.tanh = nn.Tanh()
 
-        # Input is the latent vector Z.
         """self.tconv1 = nn.ConvTranspose2d(nz, ngf * 8,
                                          kernel_size=4, stride=1, padding=0, bias=False)
         self.bn1 = nn.BatchNorm2d(ngf * 8)
@@ -134,7 +135,7 @@ class Generator(nn.Module):
 
     def forward(self, x):
         x = torch.relu(self.tconv1(x))
-        x = x.view(x.size(dim=0), 32, self.model_size*16)
+        x = x.view(x.size(dim=0), self.model_size*32, 16)
         x = torch.relu(self.tconv2(x))
         x = torch.relu(self.tconv3(x))
         x = torch.relu(self.tconv4(x))
@@ -142,7 +143,6 @@ class Generator(nn.Module):
         x = torch.relu(self.tconv6(x))
         x = self.tconv7(x)
         x = self.tanh(x)
-        print(x)
         return x
 """
         self.tconv1 = nn.ConvTranspose1d(latent_size, 250, kernel_size=1)

@@ -8,7 +8,6 @@ from generator import Generator, GeneratorWaveGAN
 from discriminator import Discriminator, WGANDiscriminator
 from typing import Dict
 import numpy as np
-import util
 
 
 #Taken from https://github.com/Zeleni9/pytorch-wgan/ TODO: Write own version.
@@ -154,16 +153,15 @@ def train(args : Dict):
                     gradient_penalty = calculate_gradient_penalty(batch_size, x.data, y.data, D, G)
                     gradient_penalty.backward()
                 if mode == 'wgan':
-                    #Weight - before or after computing Gradients?
+                    #Weight clipping - before or after computing Gradients?
                     weight_clipping_limit = 0.01
                     for p in D.parameters():
                         p.data.clamp_(-weight_clipping_limit, weight_clipping_limit)
             optimizerD.step()
             lossDs_temp.append(errD.item())
         lossDs.append(sum(lossDs_temp)/k)
-            #End: Update Discriminator weights
+        #End: Update Discriminator weights
 
-        #
         for p in D.parameters():
             p.requires_grad = False
 
@@ -222,7 +220,7 @@ def test_discriminator(D : Discriminator, G : Generator, batch_size, dataset : i
 
 
 if __name__ == '__main__':
-    args = {'num_iterations': 10000000, 'k': 5, 'batch_size': 1, 'latent_size': 100,
+    args = {'num_iterations': 10000000, 'k': 5, 'batch_size': 16, 'latent_size': 100,
             'dataset_path': './datasets/nsynth-test/keyboard_accoustic', 'learning_rate': 0.0002, 'generate_path': './generated_sounds',
             'mode': 'wgan-gp', 'latent_dist': 'normal'}
     D, G = train(args)
