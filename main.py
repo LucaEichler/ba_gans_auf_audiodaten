@@ -53,7 +53,7 @@ def latent_vector_normal(batch_size, latent_size):
     Returns latent vector sampled from the (standard) normal distribution.
     """
     #TODO: Check if values in [-1,1]
-    return torch.randn(batch_size, latent_size, 1)
+    return torch.randn(batch_size, latent_size)
 
 def load_dataset(path):
     raise NotImplementedError
@@ -122,6 +122,7 @@ def train(args : Dict):
             #Sample minibatch of m noise samples to train discriminator
             z = torch.unsqueeze(latent_vector_from_numpy(batch_size, latent_size), 0)
             z = sampleZ(batch_size, latent_size, latent_dist)
+            print(z.size())
             y = G(z)
 
             #Sample minibatch of m examples from data generating distribution
@@ -184,7 +185,7 @@ def train(args : Dict):
 
         #Generate samples, test discriminator and plot losses every (?) iterations to check progress:
         if i % 1000 == 0:
-            generate_audio(G, 'it'+str(i)+'_', 3, batch_size, latent_size, latent_dist)
+            generate_audio(G, f'it{i}_', 3, batch_size, latent_size, latent_dist)
             test_discriminator(D, G, batch_size, dataset, latent_size, epoch, epoch_iteration, latent_dist)
             plotter.plot_losses(lossDs, lossGs)
             #for p in G.parameters():
@@ -220,9 +221,9 @@ def test_discriminator(D : Discriminator, G : Generator, batch_size, dataset : i
 
 
 if __name__ == '__main__':
-    args = {'num_iterations': 10000000, 'k': 5, 'batch_size': 16, 'latent_size': 100,
+    args = {'num_iterations': 10000000, 'k': 1, 'batch_size': 1, 'latent_size': 100,
             'dataset_path': './datasets/nsynth-test/keyboard_accoustic', 'learning_rate': 0.0002, 'generate_path': './generated_sounds',
-            'mode': 'wgan-gp', 'latent_dist': 'normal'}
+            'mode': 'dcgan', 'latent_dist': 'normal'}
     D, G = train(args)
 
 

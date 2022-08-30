@@ -47,9 +47,9 @@ class GeneratorWaveGAN(nn.Module):
         x = torch.relu(self.tconv2(x))
         print(x.size())
 
-
         x = torch.relu(self.tconv3(x))
         print(x.size())
+        print(f"{x.size()=}")
 
 
         x = torch.relu(self.tconv4(x))

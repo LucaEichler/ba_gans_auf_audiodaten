@@ -15,14 +15,16 @@ from discriminator import DiscriminatorWaveGAN
 
 
 def run_tests():
+    plotter.plot_wav('./generated_sounds/it238000_0.wav', size=500)
+    plotter.plot_wav('./datasets/nsynth-test/4keys/keyboard_acoustic_004-090-075.wav', size=500)
 
-    D = DiscriminatorWaveGAN(model_size=2)
+    """D = DiscriminatorWaveGAN(model_size=2)
 
 
     G = GeneratorWaveGAN(latent_size= 100, model_size=2)
     _100 = torch.full(size=(1, 1, 100), fill_value=1).type(torch.FloatTensor)
     print(_100)
-    print(G(_100))
+    print(G(_100))"""
 #    plotter.plot_dataset('audioComplete', './datasets/nsynth/nsynth-test/audioComplete', 64000)
     """"
     
