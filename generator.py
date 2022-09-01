@@ -37,35 +37,26 @@ class GeneratorWaveGAN(nn.Module):
 
 
     def forward(self, x):
-        print(x.size())
         x = self.fc1(x)
-        print(x.size())
         x = x.view(-1, self.model_size*32, 16)
         x = x = torch.relu(x)
-        print(x.size())
 
         x = torch.relu(self.tconv2(x))
-        print(x.size())
 
         x = torch.relu(self.tconv3(x))
-        print(x.size())
-        print(f"{x.size()=}")
+       #print(f"{x.size()=}")
 
 
         x = torch.relu(self.tconv4(x))
-        print(x.size())
 
 
         x = torch.relu(self.tconv5(x))
-        print(x.size())
 
 
         x = torch.relu(self.tconv6(x))
-        print(x.size())
 
 
         x = self.tconv7(x)
-        print(x.size())
 
 
         x = self.tanh(x)

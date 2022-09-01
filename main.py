@@ -76,20 +76,22 @@ def train(args : Dict):
     mode = args.get('mode')
     latent_dist = args.get('latent_dist')
     learning_rate = args.get('learning_rate')
-
+    device = torch.device('cuda:0' if (torch.cuda.is_available()) else 'cpu')
+    device = torch.device('cuda')
+    print(f'{device=}')
 
     #Initialize Generator and Discriminator
-    G = GeneratorWaveGAN(latent_size, model_size=1)
-    D = Discriminator(model_size=1)
+    G = GeneratorWaveGAN(latent_size, model_size=1).to(device)
+    D = Discriminator(model_size=1).to(device)
     if mode == 'wgan' or mode == 'wgan-gp':
-        D = WGANDiscriminator(model_size=1)
+        D = WGANDiscriminator(model_size=1).to(device)
 
     #Use binary cross entropy as loss function
     loss_fn = torch.nn.BCELoss()
 
     torch.autograd.set_detect_anomaly(True)
-    optimizerD = torch.optim.Adam(D.parameters(), lr=learning_rate*0.1, betas=(0.5, 0.999))
-    optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate*0.5, betas=(0.5, 0.999))
+    optimizerD = torch.optim.Adam(D.parameters(), lr=learning_rate, betas=(0.5, 0.999))
+    optimizerG = torch.optim.Adam(G.parameters(), lr=learning_rate, betas=(0.5, 0.999))
     if mode == 'wgan':
         optimizerD = torch.optim.RMSprop(D.parameters(), lr=0.00005)
         optimizerG = torch.optim.RMSprop(G.parameters(), lr=0.00005)
@@ -100,7 +102,6 @@ def train(args : Dict):
     epoch_iteration = 0
     for i in range(num_iterations):
 
-        #
         for p in D.parameters():
             p.requires_grad = True
 
@@ -121,13 +122,13 @@ def train(args : Dict):
 
             #Sample minibatch of m noise samples to train discriminator
             z = torch.unsqueeze(latent_vector_from_numpy(batch_size, latent_size), 0)
-            z = sampleZ(batch_size, latent_size, latent_dist)
-            print(z.size())
+            z = torch.unsqueeze(latent_vector_from_numpy(batch_size, latent_size), 0)
+            z = sampleZ(batch_size, latent_size, latent_dist).to(device)
             y = G(z)
 
             #Sample minibatch of m examples from data generating distribution
             batch = dataset.get_batch(epoch_iteration, batch_size, epoch, output_size=65536)
-            x = torch.unsqueeze((torch.from_numpy(batch)), 1).float()
+            x = torch.unsqueeze((torch.from_numpy(batch)), 1).float().to(device)
 
             #Start: Update Discriminator weights
             optimizerD.zero_grad()
@@ -172,7 +173,7 @@ def train(args : Dict):
         G.zero_grad()
 
         #Sample minibatch of m noise samples to train generator
-        z = sampleZ(batch_size, latent_size, latent_dist)
+        z = sampleZ(batch_size, latent_size, latent_dist).to(device)
 
         if not (mode == 'wgan' or mode == 'wgan-gp'):
             errG = loss_fn(D(G(z)).view(-1), torch.full((batch_size,), 1).float())
@@ -221,6 +222,7 @@ def test_discriminator(D : Discriminator, G : Generator, batch_size, dataset : i
 
 
 if __name__ == '__main__':
+    torch.zeros(1).cuda()
     args = {'num_iterations': 10000000, 'k': 1, 'batch_size': 1, 'latent_size': 100,
             'dataset_path': './datasets/nsynth-test/keyboard_accoustic', 'learning_rate': 0.0002, 'generate_path': './generated_sounds',
             'mode': 'dcgan', 'latent_dist': 'normal'}

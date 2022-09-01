@@ -15,8 +15,13 @@ from discriminator import DiscriminatorWaveGAN
 
 
 def run_tests():
-    plotter.plot_wav('./generated_sounds/it238000_0.wav', size=500)
-    plotter.plot_wav('./datasets/nsynth-test/4keys/keyboard_acoustic_004-090-075.wav', size=500)
+    plotter.plot_wav('./generated_sounds/it1000_0.wav', size=500)
+    plotter.plot_wav('./generated_sounds/it2000_0.wav', size=500)
+    plotter.plot_wav('./generated_sounds/it3000_0.wav', size=500)
+    plotter.plot_wav('./generated_sounds/it4000_0.wav', size=500)
+    plotter.plot_wav('./generated_sounds/it5000_0.wav', size=500)
+    plotter.plot_wav('./generated_sounds/it16000_0.wav', size=500)
+    plotter.plot_wav('./datasets/nsynth-test/4keys/keyboard_acoustic_004-090-075.wav', size=500, color='r')
 
     """D = DiscriminatorWaveGAN(model_size=2)
 
